@@ -1,11 +1,11 @@
 require("dotenv").config();
 const qrcode = require("qrcode-terminal");
 const { Client, LocalAuth } = require("whatsapp-web.js");
-const { loadCommands } = require("./utils/commandHandler");
-const store = require("./utils/store");
-const whitelist = require("./utils/whitelist");
-const { getAfk, clearAfk } = require("./utils/state");
-const { safeGetMentions } = require("./utils/safe");
+const { loadCommands } = require("./commandHandler");
+const store = require("./store");
+const whitelist = require("./whitelist");
+const { getAfk, clearAfk } = require("./state");
+const { safeGetMentions } = require("./safe");
 
 const PREFIX = process.env.PREFIX || "$";
 const commands = loadCommands();
