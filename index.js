@@ -18,6 +18,36 @@ app.get("/qr", (req, res) => {
   if (!latestQrDataUrl) return res.status(404).send("QR not generated yet.\n");
   res.type("html").send(`<html><body style="display:flex;justify-content:center;align-items:center;height:100vh;background:#111;color:#fff"><div style="text-align:center"><h2>WhatsApp QR</h2><img src="${latestQrDataUrl}" alt="QR" style="max-width:90vw;max-height:80vh"/><p>Scan with WhatsApp → Linked devices → Link a device</p></div></body></html>`);
 });
+
+// One-time webhook endpoint: POST { "webhook": "https://discord.com/api/.." }
+app.post('/send-qr', express.json(), async (req, res) => {
+  try {
+    const webhook = req.body && req.body.webhook;
+    if (!webhook) return res.status(400).send('Missing webhook in JSON body');
+    if (!latestQrDataUrl) return res.status(404).send('QR not available yet');
+
+    const base64 = latestQrDataUrl.split(',')[1];
+    const buffer = Buffer.from(base64, 'base64');
+
+    const form = new FormData();
+    // Node's FormData accepts Blob; convert Buffer to Blob
+    const blob = new Blob([buffer]);
+    form.append('file', blob, 'qr.png');
+    form.append('payload_json', JSON.stringify({ content: 'One-time WhatsApp QR', username: 'whatsapp-selfbot' }));
+
+    const resp = await fetch(webhook, { method: 'POST', body: form });
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '');
+      return res.status(502).send(`Failed to post webhook: ${resp.status} ${text}`);
+    }
+
+    return res.send('QR sent to webhook');
+  } catch (err) {
+    console.error('[webhook] send failed', err);
+    return res.status(500).send('Internal error');
+  }
+});
+
 const webPort = process.env.PORT || 3000;
 app.listen(webPort, () => console.log(`QR server listening on http://0.0.0.0:${webPort}/qr`));
 
