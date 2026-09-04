@@ -3,7 +3,12 @@ const path = require("path");
 
 function loadCommands() {
   const commands = new Map();
-  const commandsDir = path.join(__dirname, "..", "commands");
+  const commandsDir = path.join(__dirname, "commands");
+
+  if (!fs.existsSync(commandsDir)) {
+    console.warn(`[commandHandler] Commands directory not found: ${commandsDir}`);
+    return commands;
+  }
 
   for (const file of fs.readdirSync(commandsDir)) {
     if (!file.endsWith(".js")) continue;
