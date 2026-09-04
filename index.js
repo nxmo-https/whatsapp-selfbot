@@ -1,5 +1,7 @@
 require("dotenv").config();
 const qrcode = require("qrcode-terminal");
+const qrcodeLib = require("qrcode");
+const express = require("express");
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const { loadCommands } = require("./commandHandler");
 const store = require("./store");
@@ -8,6 +10,16 @@ const { getAfk, clearAfk } = require("./state");
 
 const PREFIX = process.env.PREFIX || "$";
 const commands = loadCommands();
+
+// Simple HTTP server to expose the latest QR as an image for easier linking from Railway dashboard
+let latestQrDataUrl = null;
+const app = express();
+app.get("/qr", (req, res) => {
+  if (!latestQrDataUrl) return res.status(404).send("QR not generated yet.\n");
+  res.type("html").send(`<html><body style="display:flex;justify-content:center;align-items:center;height:100vh;background:#111;color:#fff"><div style="text-align:center"><h2>WhatsApp QR</h2><img src="${latestQrDataUrl}" alt="QR" style="max-width:90vw;max-height:80vh"/><p>Scan with WhatsApp → Linked devices → Link a device</p></div></body></html>`);
+});
+const webPort = process.env.PORT || 3000;
+app.listen(webPort, () => console.log(`QR server listening on http://0.0.0.0:${webPort}/qr`));
 
 const client = new Client({
   authStrategy: new LocalAuth({ dataPath: "./.wwebjs_auth" }),
