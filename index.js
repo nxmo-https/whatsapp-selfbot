@@ -48,6 +48,27 @@ app.post('/send-qr', express.json(), async (req, res) => {
   }
 });
 
+const fs = require('fs');
+
+// Endpoint to clear LocalAuth data and restart the process (forces a fresh QR).
+app.post('/clear-auth', (req, res) => {
+  try {
+    const authPath = './.wwebjs_auth';
+    if (fs.existsSync(authPath)) {
+      fs.rmSync(authPath, { recursive: true, force: true });
+      console.log('[auth] removed .wwebjs_auth to force re-auth');
+    } else {
+      console.log('[auth] .wwebjs_auth not found, nothing to remove');
+    }
+    res.send('Auth cleared; restarting');
+    // Small delay to let response flush
+    setTimeout(() => process.exit(0), 1000);
+  } catch (err) {
+    console.error('[auth] clear failed', err);
+    res.status(500).send('Failed to clear auth');
+  }
+});
+
 const webPort = process.env.PORT || 3000;
 app.listen(webPort, () => console.log(`QR server listening on http://0.0.0.0:${webPort}/qr`));
 
